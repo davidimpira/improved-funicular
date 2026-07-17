@@ -1,0 +1,83 @@
+//@version=6
+// Hour-Volume-Surprise Breakout — companion indicator to this repo's research.
+//
+// Flags hourly bars whose volume is unusually high FOR THAT CLOCK HOUR
+// (vs the average of the prior N same-hour bars), which the repo's backtest
+// found is the condition separating hour-range breakouts with positive
+// expectancy from noise (results/breakout_backtest_by_hour.csv).
+//
+// On a signal bar it draws the bar's high/low as breakout entry/stop levels
+// in the direction of a higher-timeframe bias (default: close vs 200h SMA —
+// replace with your own bias input if you have one).
+//
+// USE ON A 1-HOUR CHART of a 24/7 crypto symbol (spot or perp). The
+// same-hour lookback assumes exactly 24 bars per day, which holds for
+// crypto but NOT for CME futures or equities.
+
+indicator("Hour Volume Surprise Breakout", overlay = true, max_lines_count = 100, max_labels_count = 100)
+
+lookback  = input.int(30,  "Same-hour bars for volume norm", minval = 10, maxval = 60)
+volMult   = input.float(2.0, "Volume surprise threshold (× hour norm)", minval = 1.0, step = 0.25,
+     tooltip = "Backtest: edge appears ≥2.0 and grows toward 3.0 with fewer signals")
+biasLen   = input.int(200, "Bias SMA length (hours)", minval = 10)
+extendN   = input.int(12,  "Extend range levels (bars)", minval = 1, maxval = 48)
+showLabel = input.bool(true, "Show volume-multiple label")
+
+onHourly = timeframe.isintraday and timeframe.multiplier == 60
+
+// average volume of the same clock hour over the prior `lookback` days
+hourNorm() =>
+    float s = 0.0
+    for i = 1 to lookback
+        s += volume[24 * i]
+    s / lookback
+
+norm     = hourNorm()
+surprise = norm > 0 ? volume / norm : na
+
+biasSma  = ta.sma(close, biasLen)
+biasLong = close > biasSma
+
+// fire only on upward threshold crossings, and only on confirmed bars
+crossed = onHourly and not na(surprise) and surprise >= volMult and
+     (na(surprise[1]) or surprise[1] < volMult)
+signal  = crossed and barstate.isconfirmed
+
+var line  entryLn = na
+var line  stopLn  = na
+var label sigLbl  = na
+
+if signal
+    entryPx = biasLong ? high : low
+    stopPx  = biasLong ? low  : high
+    entryLn := line.new(bar_index, entryPx, bar_index + extendN, entryPx,
+         color = color.new(color.teal, 0), width = 2)
+    stopLn  := line.new(bar_index, stopPx, bar_index + extendN, stopPx,
+         color = color.new(color.red, 0), width = 2, style = line.style_dashed)
+    if showLabel
+        sigLbl := label.new(bar_index, high,
+             str.format("{0,number,#.#}× hour vol\n{1}", surprise,
+                 biasLong ? "bias LONG: entry > high, stop < low"
+                          : "bias SHORT: entry < low, stop > high"),
+             style = biasLong ? label.style_label_down : label.style_label_up,
+             color = color.new(color.teal, 20), textcolor = color.white,
+             size = size.small)
+
+barcolor(signal ? color.new(color.teal, 0) : na)
+bgcolor(onHourly and not na(surprise) and surprise >= volMult
+     ? color.new(color.teal, 88) : na)
+
+plot(biasSma, "Bias SMA", color = color.new(color.gray, 40))
+
+// --- alerts: create a TradingView alert on this indicator, once per bar close
+alertcondition(crossed, "Volume surprise (any bias)",
+     "BTC hour-volume surprise: bar volume crossed the threshold vs this hour's norm. Range high/low = entry/stop levels.")
+alertcondition(crossed and biasLong, "Volume surprise + bias LONG",
+     "Hour-volume surprise with long bias: consider buy stop above bar high, protective stop below bar low.")
+alertcondition(crossed and not biasLong, "Volume surprise + bias SHORT",
+     "Hour-volume surprise with short bias: consider sell stop below bar low, protective stop above bar high.")
+
+if barstate.islast and not onHourly
+    var table warn = table.new(position.top_center, 1, 1)
+    table.cell(warn, 0, 0, "⚠ Use this indicator on a 1-hour chart",
+         text_color = color.white, bgcolor = color.new(color.red, 20))

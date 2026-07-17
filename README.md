@@ -17,6 +17,7 @@ scripts/live_features.py         causal features shared by training and live sco
 scripts/train_reversal_model.py  walk-forward validation + final model fit
 scripts/live_score.py            hourly live scorer + Telegram alerting
 .github/workflows/reversal-alert.yml  hourly cron that runs the live scorer
+pine/hour_volume_surprise.pine   TradingView (Pine v6) port of the volume-surprise engine
 models/reversal_model.json       shipped logistic model (coefs + base rate)
 data/btcusd_1h.csv               74,863 hourly candles, 2018-01-01 .. 2026-07-17 (UTC)
 results/                         figures, tables, summary.json, live_signal_backtest.md
@@ -54,14 +55,26 @@ python scripts/analysis.py --data data/btcusd_1h.csv --outdir results
 
 See [REPORT.md](REPORT.md) for the full statistics, caveats, and references.
 
-## Live reversal alerts
+## Live alerts: unusual volume for the hour
 
-A live tool built on the findings above: every hour it scores
-**P(confirmed reversal within the next 3 bars)** for the just-closed BTC/USD
-bar using only causally available features (UTC hour, volume surprise vs that
-hour's own norm, recent volume build-up, momentum, distance from the 24h range,
-run length) and sends a Telegram message when the probability crosses the
-alert threshold.
+The live engine's primary trigger is **volume surprise** — the just-closed
+bar's volume vs the trailing 30-day average for that same UTC hour. The
+breakout backtest ([scripts/breakout_backtest.py](scripts/breakout_backtest.py))
+showed this is the condition that separates hour-range breakouts with positive
+expectancy from noise; hour-of-day alone is not tradable. Alerts include the
+signal bar's high/low (entry/stop levels for a bias-direction range-breakout
+tactic) and, as context, the reversal model's **P(confirmed reversal within
+the next 3 bars)**. Thresholds: `VOL_SURPRISE_MIN` (default 2.0× the hour
+norm; edge grows toward 3.0 with fewer signals) and optionally
+`ALERT_MIN_LIFT` to let the reversal model trigger alerts on its own.
+
+Prefer TradingView? The same engine is implemented as a Pine v6 indicator in
+[`pine/hour_volume_surprise.pine`](pine/hour_volume_surprise.pine) — paste it
+into the Pine editor on a **1-hour chart** of a 24/7 crypto symbol. It shades
+volume-surprise bars, draws the signal bar's high/low as entry/stop lines in
+the bias direction (200h SMA by default), and exposes three
+`alertcondition`s (any / bias-long / bias-short) so TradingView's native
+alerts (mobile push, webhook) replace the Telegram plumbing.
 
 Walk-forward validation (2020–2026, each year scored by a model trained only
 on prior years — [results/live_signal_backtest.md](results/live_signal_backtest.md)):
@@ -84,8 +97,9 @@ followed by a confirmed reversal within 3 hours (3.5× lift).
    prints the message instead of sending.
 
 Alerts fire only on upward threshold *crossings* (a stretch of consecutive
-hot hours produces one alert). Tune sensitivity with the `ALERT_MIN_LIFT` env
-in the workflow, using the trade-off table in the backtest report.
+hot hours produces one alert). Tune sensitivity with the `VOL_SURPRISE_MIN`
+env in the workflow; the reversal-model trade-off table is in the backtest
+report if you enable `ALERT_MIN_LIFT`.
 
 ### Retrain / run locally
 

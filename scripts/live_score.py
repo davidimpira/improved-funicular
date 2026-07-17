@@ -1,20 +1,34 @@
-"""Live scorer: fetch recent candles, score reversal probability, alert.
+"""Live scorer: alert on unusual volume for the hour (+ reversal context).
 
 Designed to run from cron (e.g. GitHub Actions, a few minutes past each
 hour). Fetches the last ~40 days of hourly BTC/USD candles from Bitstamp,
-rebuilds the causal features, scores the last CLOSED bar with the saved
-logistic model, and sends a Telegram message when the probability crosses
-the alert threshold.
+rebuilds the causal features, and evaluates the last CLOSED bar.
 
-Alert rule (stateless, no DB needed):
-  alert iff p[last] >= threshold AND p[previous] < threshold
-i.e. only on upward threshold crossings, so a stretch of consecutive hot
-hours produces one alert, not one per hour.
+PRIMARY trigger — volume surprise: the bar's volume vs the trailing mean
+volume of the same UTC hour (prior 30 same-hour bars). The breakout
+backtest (results/breakout_backtest_by_hour.csv, scripts/breakout_backtest.py)
+showed this is the condition that separates hour-range breakouts with
+positive expectancy from noise; hour-of-day alone does not.
+
+SECONDARY context — the reversal model's P(confirmed reversal within 3
+bars), included in every alert and able to trigger one on its own if
+ALERT_MIN_LIFT is set.
+
+Alert rule (stateless, no DB needed): fire only on upward threshold
+crossings (previous bar below, current bar at/above), so a stretch of
+consecutive hot hours produces one alert, not one per hour.
+
+The alert message includes the signal bar's high/low — the entry/stop
+levels for a bias-direction range-breakout tactic.
 
 Environment:
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID   if unset, prints instead of sending
-  ALERT_MIN_LIFT   alert threshold as a multiple of base rate (default 2.5;
-                   see results/live_signal_backtest.md before changing)
+  VOL_SURPRISE_MIN   volume multiple of the hour's norm that triggers an
+                     alert (default 2.0; backtest edge grows toward 3.0
+                     with fewer signals)
+  ALERT_MIN_LIFT     optional reversal-model trigger, as a multiple of the
+                     base rate (default 0 = model is context only; 2.5 was
+                     the earlier default, see results/live_signal_backtest.md)
 
 Usage:
     python scripts/live_score.py [--dry-run]
@@ -87,8 +101,8 @@ def main() -> None:
     with open(args.model) as f:
         model = json.load(f)
     base = model["base_rate"]
-    min_lift = float(os.environ.get("ALERT_MIN_LIFT", "2.5"))
-    threshold = base * min_lift
+    vol_min = float(os.environ.get("VOL_SURPRISE_MIN", "2.0"))
+    min_lift = float(os.environ.get("ALERT_MIN_LIFT", "0"))
 
     feats = build_features(fetch_recent())
     scored = feats.dropna(subset=FEATURES)
@@ -97,28 +111,36 @@ def main() -> None:
         sys.exit(1)
 
     last, prev = scored.iloc[-1], scored.iloc[-2]
+    vol_last = math.exp(last["vol_surprise"])
+    vol_prev = math.exp(prev["vol_surprise"])
     p_last = predict_proba(last, model)
     p_prev = predict_proba(prev, model)
-    lift = p_last / base
 
     bar_ts = scored.index[-1]
     print(f"bar {bar_ts:%Y-%m-%d %H:%M} UTC | close {last['close']:,.0f} | "
-          f"P(reversal<=3 bars) {p_last:.1%} (lift {lift:.2f}x, "
-          f"prev {p_prev:.1%}, threshold {threshold:.1%})")
+          f"volume {vol_last:.2f}x hour norm (prev {vol_prev:.2f}x, "
+          f"threshold {vol_min:.1f}x) | P(reversal<=3 bars) {p_last:.1%}")
 
-    crossing = p_last >= threshold and p_prev < threshold
-    if not crossing:
+    vol_crossing = vol_last >= vol_min and vol_prev < vol_min
+    rev_crossing = (min_lift > 0 and p_last >= base * min_lift
+                    and p_prev < base * min_lift)
+    if not vol_crossing and not rev_crossing:
         print("no alert (below threshold or already alerted on this stretch)")
         return
 
+    trigger = ("UNUSUAL VOLUME for the hour" if vol_crossing
+               else "reversal-model threshold")
     msg = (
-        f"BTC/USD reversal watch — {bar_ts:%H:%M} UTC bar\n"
-        f"P(confirmed reversal within 3 bars): {p_last:.1%} "
-        f"({lift:.1f}x the {base:.1%} base rate)\n"
-        f"Price: {last['close']:,.0f}\n"
-        f"Drivers: volume {math.exp(last['vol_surprise']):.2f}x this hour's norm, "
-        f"3-bar momentum z {last['mom3']:+.2f}, run length {last['runlen']:+.0f}\n"
-        f"Model: {model['target']} | not financial advice"
+        f"BTC/USD {trigger} — {bar_ts:%H:%M} UTC bar\n"
+        f"Volume: {vol_last:.1f}x this hour's 30-day norm\n"
+        f"Close: {last['close']:,.0f}\n"
+        f"Signal-bar range (breakout entry/stop levels):\n"
+        f"  high {last['high']:,.0f} / low {last['low']:,.0f} "
+        f"(width {(last['high'] - last['low']) / last['close']:.2%})\n"
+        f"Context: P(reversal<=3 bars) {p_last:.1%} "
+        f"({p_last / base:.1f}x base), momentum z {last['mom3']:+.2f}, "
+        f"run {last['runlen']:+.0f}\n"
+        f"Not financial advice"
     )
     if args.dry_run:
         print("[dry-run] would send:\n" + msg)

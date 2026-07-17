@@ -23,5 +23,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          ALERT_MIN_LIFT: "2.5"
+          # primary trigger: bar volume >= this multiple of the hour's norm
+          VOL_SURPRISE_MIN: "2.0"
+          # optional secondary trigger from the reversal model (0 = context only)
+          ALERT_MIN_LIFT: "0"
         run: python scripts/live_score.py
