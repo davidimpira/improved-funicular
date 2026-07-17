@@ -1,0 +1,27 @@
+name: reversal-alert
+
+on:
+  schedule:
+    # a few minutes past every hour, so the hourly candle has closed
+    - cron: "6 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet pandas numpy
+      - name: Score latest bar and alert on threshold crossing
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_MIN_LIFT: "2.5"
+        run: python scripts/live_score.py
