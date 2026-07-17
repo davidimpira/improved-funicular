@@ -12,6 +12,7 @@ Full write-up with results, charts, and a review of prior published research:
 ```
 scripts/fetch_data.py            pull hourly BTC/USD OHLCV from Bitstamp (no API key)
 scripts/analysis.py              event detection + hourly statistics + clock-vs-volume tests
+scripts/breakout_backtest.py     hour-range breakout tactic backtest (HTF-bias direction)
 scripts/live_features.py         causal features shared by training and live scoring
 scripts/train_reversal_model.py  walk-forward validation + final model fit
 scripts/live_score.py            hourly live scorer + Telegram alerting
