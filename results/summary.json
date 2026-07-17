@@ -1,0 +1,304 @@
+{
+  "data": {
+    "source": "Bitstamp BTC/USD 1h OHLCV",
+    "start": "2018-01-01 00:00:00+00:00",
+    "end": "2026-07-17 06:00:00+00:00",
+    "bars": 74863,
+    "params": {
+      "K": 3,
+      "noise_mult": 0.75,
+      "donchian_n": 24,
+      "bootstrap_reps": 2000
+    }
+  },
+  "reversal": {
+    "total_events": 2568,
+    "pooled_rate": 0.03430265952473184,
+    "chi2_uniform": {
+      "stat": 189.0832420076565,
+      "p": 4.572058468594623e-28
+    },
+    "top_hours": {
+      "13": {
+        "events": 159,
+        "rate": 0.051,
+        "lift": 1.4861,
+        "p_fdr": 0.0
+      },
+      "15": {
+        "events": 147,
+        "rate": 0.0471,
+        "lift": 1.374,
+        "p_fdr": 0.0007
+      },
+      "14": {
+        "events": 146,
+        "rate": 0.0468,
+        "lift": 1.3646,
+        "p_fdr": 0.0009
+      },
+      "16": {
+        "events": 137,
+        "rate": 0.0439,
+        "lift": 1.2805,
+        "p_fdr": 0.0103
+      },
+      "20": {
+        "events": 136,
+        "rate": 0.0436,
+        "lift": 1.2711,
+        "p_fdr": 0.0127
+      }
+    },
+    "bottom_hours": {
+      "6": {
+        "events": 66,
+        "rate": 0.0212,
+        "lift": 0.6167,
+        "p_fdr": 0.0003
+      },
+      "2": {
+        "events": 68,
+        "rate": 0.0218,
+        "lift": 0.6354,
+        "p_fdr": 0.0004
+      },
+      "3": {
+        "events": 69,
+        "rate": 0.0221,
+        "lift": 0.6447,
+        "p_fdr": 0.0006
+      },
+      "5": {
+        "events": 70,
+        "rate": 0.0224,
+        "lift": 0.6541,
+        "p_fdr": 0.0007
+      },
+      "8": {
+        "events": 72,
+        "rate": 0.0231,
+        "lift": 0.673,
+        "p_fdr": 0.001
+      }
+    },
+    "sig_hours_fdr05": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      15,
+      16,
+      20
+    ],
+    "split_stability": {
+      "spearman_rho": 0.6504136445707208,
+      "p": 0.0005796319197800192,
+      "split_at": "2022-04-09 15:00:00+00:00"
+    },
+    "clock_vs_volume_contemporaneous": {
+      "n": 74696,
+      "volume_measure": "log_rel_vol",
+      "pseudo_r2": {
+        "hour_only": 0.00892155387482596,
+        "volume_only": 0.1068794771595577,
+        "hour_plus_volume": 0.10980465671511563
+      },
+      "hour_effect_after_volume": {
+        "lr_stat": 65.39689608048502,
+        "p": 6.113438558568626e-06
+      },
+      "volume_effect_after_hour": {
+        "lr_stat": 2255.397204656383,
+        "p": 0.0
+      },
+      "volume_coef_alone": 1.0430095030621975,
+      "volume_coef_with_hours": 1.0569741519488147
+    },
+    "clock_vs_volume_lagged": {
+      "n": 74693,
+      "volume_measure": "log_rel_vol_lag",
+      "pseudo_r2": {
+        "hour_only": 0.008922058263777788,
+        "volume_only": 0.048878718248407615,
+        "hour_plus_volume": 0.05314804429357556
+      },
+      "hour_effect_after_volume": {
+        "lr_stat": 95.44646574363287,
+        "p": 8.512165061923804e-11
+      },
+      "volume_effect_after_hour": {
+        "lr_stat": 988.7307776245143,
+        "p": 5.0559467405707625e-217
+      },
+      "volume_coef_alone": 0.8015243294674416,
+      "volume_coef_with_hours": 0.8043753856839015
+    }
+  },
+  "breakout": {
+    "total_events": 5433,
+    "pooled_rate": 0.0725725658870203,
+    "chi2_uniform": {
+      "stat": 409.55901208279363,
+      "p": 1.9103492014919071e-72
+    },
+    "top_hours": {
+      "14": {
+        "events": 369,
+        "rate": 0.1183,
+        "lift": 1.6302,
+        "p_fdr": 0.0
+      },
+      "15": {
+        "events": 368,
+        "rate": 0.118,
+        "lift": 1.6258,
+        "p_fdr": 0.0
+      },
+      "16": {
+        "events": 322,
+        "rate": 0.1032,
+        "lift": 1.4226,
+        "p_fdr": 0.0
+      },
+      "13": {
+        "events": 284,
+        "rate": 0.0911,
+        "lift": 1.2547,
+        "p_fdr": 0.0003
+      },
+      "17": {
+        "events": 276,
+        "rate": 0.0885,
+        "lift": 1.2193,
+        "p_fdr": 0.0022
+      }
+    },
+    "bottom_hours": {
+      "5": {
+        "events": 125,
+        "rate": 0.0401,
+        "lift": 0.5521,
+        "p_fdr": 0.0
+      },
+      "7": {
+        "events": 163,
+        "rate": 0.0523,
+        "lift": 0.7201,
+        "p_fdr": 0.0
+      },
+      "6": {
+        "events": 164,
+        "rate": 0.0526,
+        "lift": 0.7243,
+        "p_fdr": 0.0
+      },
+      "3": {
+        "events": 167,
+        "rate": 0.0535,
+        "lift": 0.7375,
+        "p_fdr": 0.0001
+      },
+      "4": {
+        "events": 167,
+        "rate": 0.0535,
+        "lift": 0.7375,
+        "p_fdr": 0.0001
+      }
+    },
+    "sig_hours_fdr05": [
+      0,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      11,
+      13,
+      14,
+      15,
+      16,
+      17,
+      21,
+      22
+    ],
+    "split_stability": {
+      "spearman_rho": 0.6077497564776282,
+      "p": 0.0016318867011460073,
+      "split_at": "2022-04-09 15:00:00+00:00"
+    },
+    "clock_vs_volume_contemporaneous": {
+      "n": 74696,
+      "volume_measure": "log_rel_vol",
+      "pseudo_r2": {
+        "hour_only": 0.010899718248678747,
+        "volume_only": 0.2072226245401554,
+        "hour_plus_volume": 0.2117063464565614
+      },
+      "hour_effect_after_volume": {
+        "lr_stat": 174.2533945419782,
+        "p": 3.2541349653572237e-25
+      },
+      "volume_effect_after_hour": {
+        "lr_stat": 7804.0603909262645,
+        "p": 0.0
+      },
+      "volume_coef_alone": 1.473281392051571,
+      "volume_coef_with_hours": 1.5201125863517135
+    },
+    "clock_vs_volume_lagged": {
+      "n": 74693,
+      "volume_measure": "log_rel_vol_lag",
+      "pseudo_r2": {
+        "hour_only": 0.01090098902154879,
+        "volume_only": 0.010238183592170658,
+        "hour_plus_volume": 0.017435657199784793
+      },
+      "hour_effect_after_volume": {
+        "lr_stat": 279.71619365481456,
+        "p": 5.600416763384576e-46
+      },
+      "volume_effect_after_hour": {
+        "lr_stat": 253.95751471457334,
+        "p": 3.561986734452672e-57
+      },
+      "volume_coef_alone": 0.34126156577138667,
+      "volume_coef_with_hours": 0.2884244091483748
+    }
+  },
+  "volume_curve": {
+    "0": 0.91,
+    "1": 0.845,
+    "2": 0.744,
+    "3": 0.658,
+    "4": 0.657,
+    "5": 0.674,
+    "6": 0.727,
+    "7": 0.847,
+    "8": 0.895,
+    "9": 0.906,
+    "10": 0.907,
+    "11": 0.912,
+    "12": 1.151,
+    "13": 1.416,
+    "14": 1.705,
+    "15": 1.573,
+    "16": 1.419,
+    "17": 1.186,
+    "18": 1.134,
+    "19": 1.227,
+    "20": 1.189,
+    "21": 0.933,
+    "22": 0.874,
+    "23": 0.822
+  }
+}
